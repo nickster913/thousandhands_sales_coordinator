@@ -10,10 +10,14 @@ datasource db {
 /// Single row: our own WhatsApp Business app number onboarded via Coexistence.
 model WhatsappAccount {
   id                     Int       @id @default(autoincrement())
+  /// Messaging account ID (Meta still returns it as `waba_id`).
   wabaId                 String?
+  businessId             String?
   phoneNumberId          String?
   displayPhoneNumber     String?
   businessTokenEncrypted String?
+  subscribedAt           DateTime?
+  onboardingLastError    String?
 
   contactsSyncStartedAt  DateTime?
   contactsSyncRequestId  String?
@@ -31,7 +35,7 @@ model WhatsappAccount {
   isOnBizApp   Boolean?
   platformType String?
   onboardedAt  DateTime?
-  /// "pending" | "connected" | "disconnected"
+  /// "pending" | "onboarding" | "connected" | "disconnected"
   status       String    @default("pending")
 
   lastSessionEvent  Json?
@@ -57,14 +61,16 @@ model Message {
   id           Int      @id @default(autoincrement())
   wamid        String   @unique
   contactPhone String
-  /// "in" | "out_ai" | "out_human" | "history"
+  /// "in" | "out_bot" | "out_human" | "history"
   direction    String
-  /// True when sent by our business number (out_ai, out_human, or history sent by us).
+  /// True when sent by our business number (out_bot, out_human, or history sent by us).
   fromMe       Boolean  @default(false)
   type         String
   text         String?
   rawJson      Json
   timestamp    DateTime
+  /// Delivery status from messages.statuses[] or history_context.status: sent | delivered | read | failed | pending | played
+  status       String?
   edited       Boolean  @default(false)
   revoked      Boolean  @default(false)
   createdAt    DateTime @default(now())
@@ -86,11 +92,13 @@ model ChatState {
 model WebhookEvent {
   id        Int      @id @default(autoincrement())
   /// Comma-separated distinct entry[].changes[].field values in this payload.
-  field     String?
-  rawJson   Json
-  processed Boolean  @default(false)
-  error     String?
-  createdAt DateTime @default(now())
+  field        String?
+  rawJson      Json
+  processed    Boolean   @default(false)
+  /// Set while a worker has claimed this row. Stale claims are reclaimed on replay.
+  processingAt DateTime?
+  error        String?
+  createdAt    DateTime  @default(now())
 
   @@index([processed, id])
 }

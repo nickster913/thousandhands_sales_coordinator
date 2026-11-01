@@ -10,10 +10,12 @@
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
-    "start": "node dist/index.js",
+    "start": "prisma migrate deploy && node dist/index.js",
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "pretest": "node scripts/test-db.mjs",
+    "test": "node --import tsx --import ./test/setup.ts --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "db:up": "docker compose up -d db"
   },
   "dependencies": {

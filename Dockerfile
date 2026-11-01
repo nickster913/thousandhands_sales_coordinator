@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY prisma ./prisma
-RUN npx prisma generate
+RUN ./node_modules/.bin/prisma generate
 COPY --from=build /app/dist ./dist
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+# Apply pending migrations (never `migrate dev`), then exec so Node receives SIGTERM from Railway.
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/index.js"]

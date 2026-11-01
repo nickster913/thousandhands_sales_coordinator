@@ -6,7 +6,7 @@ const VERSION = "v1";
 /** AES-256-GCM. Output: v1:<iv b64>:<tag b64>:<ciphertext b64> */
 export function encryptSecret(plaintext: string): string {
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", env.tokenKey, iv);
+  const cipher = crypto.createCipheriv("aes-256-gcm", env.encryptionKey, iv);
   const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return [VERSION, iv.toString("base64"), tag.toString("base64"), ct.toString("base64")].join(":");
@@ -15,7 +15,7 @@ export function encryptSecret(plaintext: string): string {
 export function decryptSecret(payload: string): string {
   const [version, ivB64, tagB64, ctB64] = payload.split(":");
   if (version !== VERSION || !ivB64 || !tagB64 || !ctB64) throw new Error("Unrecognized encrypted payload format");
-  const decipher = crypto.createDecipheriv("aes-256-gcm", env.tokenKey, Buffer.from(ivB64, "base64"));
+  const decipher = crypto.createDecipheriv("aes-256-gcm", env.encryptionKey, Buffer.from(ivB64, "base64"));
   decipher.setAuthTag(Buffer.from(tagB64, "base64"));
   return Buffer.concat([decipher.update(Buffer.from(ctB64, "base64")), decipher.final()]).toString("utf8");
 }

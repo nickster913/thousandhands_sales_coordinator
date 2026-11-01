@@ -32,6 +32,8 @@ input[type=password],input[type=text]{font:inherit;padding:8px 10px;border:1px s
 .badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:#e8ebf0}
 .badge.ok{background:#d7f1e0;color:#1a6b34}.badge.warn{background:#fff0c7;color:#7a5200}.badge.err{background:#fbd9d6;color:#8a1f1a}
 .login{max-width:360px;margin:80px auto}
+.spaced{margin-top:6px}[hidden]{display:none}
+.btn-connect{background:#1877f2;font-weight:600;padding:10px 22px}
 `;
 
 export function renderPage(
@@ -41,8 +43,9 @@ export function renderPage(
   const nonce = res.locals.cspNonce as string;
   const nav = opts.nav === false
     ? ""
-    : `<header><span class="brand">Thousand Hands · WhatsApp</span>
-        <a href="/admin/whatsapp-connect">Connect</a>
+    : `<header><span class="brand">Thousand Hands · Order demo</span>
+        <a href="/admin">Status</a>
+        <a href="/admin/connect">Connect</a>
         <a href="/admin/chats">Chats</a>
         <form method="post" action="/admin/logout"><button class="secondary" type="submit">Log out</button></form>
       </header>`;

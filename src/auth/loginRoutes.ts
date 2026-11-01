@@ -24,7 +24,7 @@ const loginLimiter = rateLimit({
 function safeNext(value: unknown): string {
   return typeof value === "string" && /^\/admin(\/|$|\?)/.test(value) && !value.startsWith("//")
     ? value
-    : "/admin/whatsapp-connect";
+    : "/admin";
 }
 
 function renderLogin(res: express.Response, error: string | null, next: string, status = 200) {

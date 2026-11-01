@@ -2,6 +2,7 @@ import { env } from "./config/env";
 import { prisma } from "./lib/db";
 import { logger } from "./lib/logger";
 import { createApp } from "./app";
+import { replayUnprocessed } from "./webhook/processor";
 
 async function main() {
   await prisma.$connect();
@@ -9,8 +10,10 @@ async function main() {
 
   const app = createApp();
   const server = app.listen(env.PORT, () => {
-    logger.info("Server listening", { port: env.PORT, env: env.NODE_ENV, publicBaseUrl: env.PUBLIC_BASE_URL });
+    logger.info("Server listening", { port: env.PORT, env: env.NODE_ENV, appBaseUrl: env.APP_BASE_URL });
   });
+  if (!env.NOTIFY_WEBHOOK_URL) logger.warn("NOTIFY_WEBHOOK_URL is not set; owner notifications are disabled");
+  void replayUnprocessed().catch((err) => logger.error("Failed to replay unprocessed webhooks", { err }));
 
   const shutdown = (signal: string) => {
     logger.info("Shutting down", { signal });
