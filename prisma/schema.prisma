@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Single row: our own WhatsApp Business app number onboarded via Coexistence.
+model WhatsappAccount {
+  id                     Int       @id @default(autoincrement())
+  wabaId                 String?
+  phoneNumberId          String?
+  displayPhoneNumber     String?
+  businessTokenEncrypted String?
+
+  contactsSyncStartedAt  DateTime?
+  contactsSyncRequestId  String?
+  /// Set while a contacts sync call is in flight, so two calls can't race.
+  contactsSyncInFlightAt DateTime?
+  contactsSyncLastError  String?
+
+  historySyncStartedAt  DateTime?
+  historySyncRequestId  String?
+  historySyncInFlightAt DateTime?
+  historySyncLastError  String?
+  historySyncProgress   Int?
+  historySyncDeclined   Boolean   @default(false)
+
+  isOnBizApp   Boolean?
+  platformType String?
+  onboardedAt  DateTime?
+  /// "pending" | "connected" | "disconnected"
+  status       String    @default("pending")
+
+  lastSessionEvent  Json?
+  disconnectionInfo Json?
+  lastAccountEvent  Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contact {
+  id          Int      @id @default(autoincrement())
+  phoneNumber String   @unique
+  fullName    String?
+  firstName   String?
+  profileName String?
+  removed     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id           Int      @id @default(autoincrement())
+  wamid        String   @unique
+  contactPhone String
+  /// "in" | "out_ai" | "out_human" | "history"
+  direction    String
+  /// True when sent by our business number (out_ai, out_human, or history sent by us).
+  fromMe       Boolean  @default(false)
+  type         String
+  text         String?
+  rawJson      Json
+  timestamp    DateTime
+  edited       Boolean  @default(false)
+  revoked      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([contactPhone, timestamp])
+}
+
+model ChatState {
+  id                    Int       @id @default(autoincrement())
+  contactPhone          String    @unique
+  lastCustomerMessageAt DateTime?
+  humanTakeoverAt       DateTime?
+  aiEnabled             Boolean   @default(true)
+  /// Used to send the non-text fallback at most once per takeover-pause window.
+  lastFallbackSentAt    DateTime?
+  updatedAt             DateTime  @updatedAt
+}
+
+model WebhookEvent {
+  id        Int      @id @default(autoincrement())
+  /// Comma-separated distinct entry[].changes[].field values in this payload.
+  field     String?
+  rawJson   Json
+  processed Boolean  @default(false)
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([processed, id])
+}
