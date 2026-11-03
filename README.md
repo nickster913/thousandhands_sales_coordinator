@@ -95,8 +95,9 @@ There is no `WHATSAPP_ACCESS_TOKEN` or `WHATSAPP_PHONE_NUMBER_ID` env var. Do no
 5. The server replies `200 ok` immediately (Meta times out if this is slow).
 6. A background queue then:
    - writes the chat into `Message` / `Contact` / `ChatState`
-   - unless skipped (not connected, human takeover pause, or `aiEnabled=false`): calls Claude with the last 20 lines of that chat
-   - sends Claude’s text back to WhatsApp and stores it as `direction = out_bot`
+   - waits 3 seconds so several messages from the same chat become one reply
+   - skips the reply when not connected, AI is off, a phone reply is still inside `TAKEOVER_PAUSE_HOURS`, or the customer's last message is older than 24 hours
+   - calls Claude with the last 20 lines, checks those skips again, then sends the text and stores it as `direction = out_bot`
 
 Production logs **never print the message text**. The text is in Postgres (`Message.text`). Claude Cloud API sends do **not** show up as `smb_message_echoes` (those are phone-app sends only).
 
@@ -114,7 +115,7 @@ Subscribed fields: `messages`, `smb_message_echoes`, `history`, `smb_app_state_s
 |---|---|
 | Did HTTP reach Railway? | Railway **Network Logs** (proxy only: status, bytes). Useless for message content. |
 | Did the app handle it? | Railway **Deploy Logs**. JSON lines. Look for `POST /webhook`, then `Anthropic response`, then `AI reply sent`. |
-| Bot stayed quiet | `Skipping AI reply` with `reason`: `not_connected`, `takeover_pause`, `ai_disabled`, `fallback_cooldown`. |
+| Bot stayed quiet | `Skipping AI reply` with `reason`: `not_connected`, `takeover_pause`, `ai_disabled`, `outside_service_window`, `fallback_cooldown`, `newer_messages`. |
 | What did they say / what did we send? | Postgres `Message` table (`direction` `in` vs `out_bot`), not the logs. |
 | Signature / verify failures | Deploy Logs: `Webhook signature rejected` or `Webhook verification rejected`. |
 | Connection / sync state | `/admin/connect` (the Status nav item is still a placeholder). |

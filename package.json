@@ -16,7 +16,8 @@
     "typecheck": "tsc -p tsconfig.test.json",
     "pretest": "node scripts/test-db.mjs",
     "test": "node --import tsx --import ./test/setup.ts --test --test-concurrency=1 \"test/**/*.test.ts\"",
-    "db:up": "docker compose up -d db"
+    "db:up": "docker compose up -d db",
+    "encrypt-token": "tsx --env-file=.env scripts/encrypt-token.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

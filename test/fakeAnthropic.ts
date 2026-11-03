@@ -4,7 +4,7 @@ export type AnthropicCall = { body: unknown; apiKey: string | null };
  * Intercepts api.anthropic.com. Compose after installFakeGraph so Graph still hits the Graph fake
  * (this wrapper calls the current global fetch for every other host).
  */
-export function installFakeAnthropic(text = "How many cartons of item A would you like?") {
+export function installFakeAnthropic(text = "How many cartons of item A would you like?", hold?: () => Promise<void>) {
   const inner = globalThis.fetch;
   const calls: AnthropicCall[] = [];
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -15,6 +15,7 @@ export function installFakeAnthropic(text = "How many cartons of item A would yo
       body: init?.body ? JSON.parse(String(init.body)) : undefined,
       apiKey: headers.get("x-api-key"),
     });
+    if (hold) await hold();
     return new Response(
       JSON.stringify({
         id: "msg_test",
