@@ -41,6 +41,7 @@ export const CODE = "AQBhlXsctMxJYbwbrpybxlo9tLPGy-test-code";
 
 /** The happy path for a coexistence onboarding, per Meta's documented responses. */
 export function happyRoutes(overrides: Record<string, Handler> = {}): Record<string, Handler> {
+  let sendCount = 0;
   return {
     "GET /oauth/access_token": () => ({ body: { access_token: BUSINESS_TOKEN, token_type: "bearer" } }),
     [`GET /${WABA_ID}/phone_numbers`]: () => ({
@@ -50,6 +51,13 @@ export function happyRoutes(overrides: Record<string, Handler> = {}): Record<str
     [`GET /${PHONE_ID}`]: () => ({ body: { is_on_biz_app: true, platform_type: "CLOUD_API", id: PHONE_ID } }),
     [`POST /${PHONE_ID}/smb_app_data`]: (c) => ({
       body: { messaging_product: "whatsapp", request_id: `req-${(c.body as { sync_type: string }).sync_type}` },
+    }),
+    [`POST /${PHONE_ID}/messages`]: () => ({
+      body: {
+        messaging_product: "whatsapp",
+        contacts: [{ input: "16505551234", wa_id: "16505551234" }],
+        messages: [{ id: `wamid.bot-reply-${++sendCount}` }],
+      },
     }),
     ...overrides,
   };
